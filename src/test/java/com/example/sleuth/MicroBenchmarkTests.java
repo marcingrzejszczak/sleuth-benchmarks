@@ -30,7 +30,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 @BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Microbenchmark
-public class MicroBenchmark {
+public class MicroBenchmarkTests {
 
 	@Benchmark
 	@Testable

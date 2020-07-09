@@ -38,7 +38,7 @@ class Foo {
 
 	@GetMapping("/fooNoSleuth")
 	public Mono<String> fooNoSleuth() {
-		return Flux.range(1, 1000)
+		return Flux.range(1, 10)
 				.map(String::valueOf)
 				.collect(Collectors.toList())
 				.doOnEach(signal -> log.info("Got a request"))
@@ -54,7 +54,7 @@ class Foo {
 
 	@GetMapping("/foo")
 	public Mono<String> foo() {
-		return Flux.range(1, 1000)
+		return Flux.range(1, 10)
 				.map(String::valueOf)
 				.collect(Collectors.toList())
 				.doOnEach(signal -> log.info("Got a request"))
@@ -72,7 +72,7 @@ class Foo {
 
 	@GetMapping("/fooManual")
 	public Mono<String> fooManual() {
-		return Flux.range(1, 1000)
+		return Flux.range(1, 10)
 				.map(String::valueOf)
 				.collect(Collectors.toList())
 				.doOnEach(doWithThreadLocal(() -> log.info("Got a request")))
