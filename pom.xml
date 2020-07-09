@@ -17,9 +17,9 @@
 	<properties>
 		<java.version>1.8</java.version>
 		<spring-cloud.version>2020.0.0-SNAPSHOT</spring-cloud.version>
-		<app.args>--spring.sleuth.enabled=true</app.args>
-		<script.to.run>wrk.sh</script.to.run>
-		<log.name>sleuthDisabled.log</log.name>
+		<microbenchmark-runner.version>0.2.0.RELEASE</microbenchmark-runner.version>
+<!--		<jmh.version>1.22</jmh.version>-->
+<!--		<maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>-->
 	</properties>
 
 	<dependencies>
@@ -37,6 +37,33 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>com.github.mp911de.microbenchmark-runner</groupId>
+			<artifactId>microbenchmark-runner-junit5</artifactId>
+			<version>${microbenchmark-runner.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.mp911de.microbenchmark-runner</groupId>
+			<artifactId>microbenchmark-runner-extras</artifactId>
+			<version>${microbenchmark-runner.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+
+		<!--<dependency>
+			<groupId>org.openjdk.jmh</groupId>
+			<artifactId>jmh-core</artifactId>
+			<version>${jmh.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.openjdk.jmh</groupId>
+			<artifactId>jmh-generator-annprocess</artifactId>
+			<version>${jmh.version}</version>
+			<scope>provided</scope>
+		</dependency>-->
 	</dependencies>
 
 	<dependencyManagement>
@@ -54,73 +81,165 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>build-helper-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>reserve-tomcat-port</id>
-						<goals>
-							<goal>reserve-network-port</goal>
-						</goals>
-						<phase>process-resources</phase>
-						<configuration>
-							<portNames>
-								<portName>tomcat.http.port</portName>
-							</portNames>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>pre-integration-test</id>
-						<goals>
-							<goal>start</goal>
-						</goals>
-						<configuration>
-							<workingDirectory>${project.build.directory}</workingDirectory>
-							<arguments>
-								<argument>--server.port=${tomcat.http.port}</argument>
-								<argument>${app.args}</argument>
-							</arguments>
-						</configuration>
-					</execution>
-					<execution>
-						<id>post-integration-test</id>
-						<goals>
-							<goal>stop</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.6.0</version>
-				<executions>
-					<execution>
-						<id>wrk</id>
-						<phase>integration-test</phase>
-						<configuration>
-							<executable>./${script.to.run}</executable>
-							<arguments>
-								<argument>${tomcat.http.port}</argument>
-								<argument>${log.name}</argument>
-							</arguments>
-						</configuration>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>
 
+	<profiles>
+		<!--<profile>
+			<id>jmh</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-shade-plugin</artifactId>
+						<version>${maven-shade-plugin.version}</version>
+						<dependencies>
+							<dependency>
+								<groupId>org.springframework.boot</groupId>
+								<artifactId>spring-boot-maven-plugin</artifactId>
+								<version>${spring-boot.version}</version>
+							</dependency>
+						</dependencies>
+						<configuration>
+							<keepDependenciesWithProvidedScope>true
+							</keepDependenciesWithProvidedScope>
+							<createDependencyReducedPom>true</createDependencyReducedPom>
+							<filters>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
+						</configuration>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<finalName>benchmarks</finalName>
+									<transformers>
+										<transformer
+												implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+											<resource>META-INF/spring.handlers</resource>
+										</transformer>
+										<transformer
+												implementation="org.springframework.boot.maven.PropertiesMergingResourceTransformer">
+											<resource>META-INF/spring.factories</resource>
+										</transformer>
+										<transformer
+												implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+											<resource>META-INF/spring.schemas</resource>
+										</transformer>
+										<transformer
+												implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+										<transformer
+												implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+											<mainClass>org.openjdk.jmh.Main</mainClass>
+										</transformer>
+									</transformers>
+									<createDependencyReducedPom>false
+									</createDependencyReducedPom>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>-->
+		<profile>
+			<id>external</id>
+			<properties>
+				<app.args>--spring.sleuth.enabled=true</app.args>
+				<script.to.run>wrk.sh</script.to.run>
+				<log.name>sleuthDisabled.log</log.name>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>build-helper-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>reserve-tomcat-port</id>
+								<goals>
+									<goal>reserve-network-port</goal>
+								</goals>
+								<phase>process-resources</phase>
+								<configuration>
+									<portNames>
+										<portName>tomcat.http.port</portName>
+									</portNames>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>pre-integration-test</id>
+								<goals>
+									<goal>start</goal>
+								</goals>
+								<configuration>
+									<workingDirectory>${project.build.directory}</workingDirectory>
+									<arguments>
+										<argument>--server.port=${tomcat.http.port}</argument>
+										<argument>${app.args}</argument>
+									</arguments>
+								</configuration>
+							</execution>
+							<execution>
+								<id>post-integration-test</id>
+								<goals>
+									<goal>stop</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<version>1.6.0</version>
+						<executions>
+							<execution>
+								<id>wrk</id>
+								<phase>integration-test</phase>
+								<configuration>
+									<executable>./${script.to.run}</executable>
+									<arguments>
+										<argument>${tomcat.http.port}</argument>
+										<argument>${log.name}</argument>
+									</arguments>
+								</configuration>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 	<repositories>
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
 		<repository>
 			<id>spring-milestones</id>
 			<name>Spring Milestones</name>

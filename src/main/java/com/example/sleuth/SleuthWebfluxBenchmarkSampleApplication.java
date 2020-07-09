@@ -1,6 +1,7 @@
 package com.example.sleuth;
 
 import java.time.Duration;
+import java.util.stream.Collectors;
 
 import brave.propagation.TraceContext;
 import org.slf4j.Logger;
@@ -11,7 +12,6 @@ import reactor.core.scheduler.Schedulers;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.sleuth.instrument.reactor.SleuthOperators;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,7 +22,7 @@ import static org.springframework.cloud.sleuth.instrument.reactor.SleuthOperator
 public class SleuthWebfluxBenchmarkSampleApplication {
 
 	public static void main(String[] args) {
-		// System.setProperty("spring.sleuth.enabled", "false");
+//		 System.setProperty("spring.sleuth.enabled", "false");
 		// System.setProperty("spring.sleuth.reactor.instrumentation-type", "DECORATE_ON_EACH");
 		// System.setProperty("spring.sleuth.reactor.instrumentation-type", "DECORATE_ON_LAST");
 //		System.setProperty("spring.sleuth.reactor.instrumentation-type", "MANUAL");
@@ -38,7 +38,9 @@ class Foo {
 
 	@GetMapping("/fooNoSleuth")
 	public Mono<String> fooNoSleuth() {
-		return Mono.just("fooTraced")
+		return Flux.range(1, 1000)
+				.map(String::valueOf)
+				.collect(Collectors.toList())
 				.doOnEach(signal -> log.info("Got a request"))
 				.flatMap(s -> Mono.delay(Duration.ZERO, Schedulers.newParallel("foo")).map(aLong -> {
 					log.info("Logging [{}] from flat map", s);
@@ -52,8 +54,10 @@ class Foo {
 
 	@GetMapping("/foo")
 	public Mono<String> foo() {
-		return Mono.just("fooTraced")
-				.doOnNext(signal -> log.info("Got a request"))
+		return Flux.range(1, 1000)
+				.map(String::valueOf)
+				.collect(Collectors.toList())
+				.doOnEach(signal -> log.info("Got a request"))
 				.flatMap(s -> Mono.delay(Duration.ZERO, Schedulers.newParallel("foo")).map(aLong -> {
 					log.info("Logging [{}] from flat map", s);
 					return "";
@@ -68,7 +72,9 @@ class Foo {
 
 	@GetMapping("/fooManual")
 	public Mono<String> fooManual() {
-		return Mono.just("fooTraced")
+		return Flux.range(1, 1000)
+				.map(String::valueOf)
+				.collect(Collectors.toList())
 				.doOnEach(doWithThreadLocal(() -> log.info("Got a request")))
 				.flatMap(s -> Mono.subscriberContext().delayElement(Duration.ZERO, Schedulers.newParallel("foo")).map(ctx -> {
 					doWithThreadLocal(ctx, () -> log.info("Logging [{}] from flat map", s));
