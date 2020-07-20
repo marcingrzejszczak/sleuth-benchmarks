@@ -30,7 +30,11 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 @BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Microbenchmark
-public class MicroBenchmarkTests {
+public class MicroBenchmarkHttpTests {
+
+	static {
+		System.setProperty("jmh.mbr.report.publishTo", "csv:http.csv");
+	}
 
 	@Benchmark
 	@Testable
